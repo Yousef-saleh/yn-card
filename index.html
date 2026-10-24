@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>كرت يوسف نت</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* صفحة الزبون: يفتح الرابط من QR أو واتساب، ويطلع له رقم الكرت مرة وحدة (claim_card في update_v18) */
+  :root { --navy: #073449; --sky: #5BC2EE; --bg: #F4F8FA; --card: #fff; --ink: #10222C; --muted: #5E7480;
+          --ok: #1F6B3A; --bad: #B4432F; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #08202C; --card: #0E2C3B; --ink: #EAF4F8; --muted: #9DB6C2; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink);
+         font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; display: flex; flex-direction: column; }
+  header { background: var(--navy); color: #fff; padding: 22px 16px; text-align: center; }
+  header h1 { margin: 0; font-size: 22px; }
+  header p { margin: 4px 0 0; color: #C9E6F5; font-size: 14px; }
+  main { flex: 1; padding: 20px 16px; max-width: 460px; width: 100%; margin: 0 auto; }
+  .card { background: var(--card); border-radius: 18px; padding: 22px 18px; text-align: center;
+          box-shadow: 0 2px 10px rgba(7, 52, 73, .08); }
+  .muted { color: var(--muted); font-size: 14px; line-height: 1.7; }
+  .code { font-size: 34px; font-weight: 700; letter-spacing: 2px; direction: ltr; margin: 12px 0 4px;
+          font-variant-numeric: tabular-nums; color: var(--ink); word-break: break-all; }
+  .pass { direction: ltr; font-size: 18px; color: var(--muted); }
+  .pkg { display: inline-block; background: var(--sky); color: var(--navy); font-weight: 700;
+         border-radius: 999px; padding: 4px 14px; font-size: 14px; }
+  button { font: inherit; font-weight: 700; font-size: 17px; border: 0; border-radius: 14px; cursor: pointer;
+           padding: 14px 18px; width: 100%; margin-top: 16px; background: var(--navy); color: #fff; }
+  button.light { background: transparent; color: var(--ink); border: 2px solid var(--sky); }
+  button:disabled { opacity: .6; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); }
+  h2 { margin: 6px 0 8px; font-size: 20px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>يوسف نت</h1>
+  <p>كرت الإنترنت</p>
+</header>
+<main>
+  <div class="card" id="start">
+    <h2>كرتك جاهز</h2>
+    <p class="muted">اضغط الزر عشان يطلع لك رقم الكرت. الرقم يطلع <b>مرة وحدة</b> بس على هذا الجوال، فاحفظه أو صوّره.</p>
+    <button id="reveal">اعرض رقم الكرت</button>
+  </div>
+
+  <div class="card" id="shown" hidden>
+    <span class="pkg" id="pkg"></span>
+    <div class="code" id="code"></div>
+    <div class="pass" id="pass" hidden></div>
+    <button id="copy">نسخ الرقم</button>
+    <p class="muted">اتصل بشبكة يوسف نت، وفي صفحة الدخول اكتب الرقم.<br>احفظ الرقم: الرابط ما يفتح على جوال ثاني.</p>
+  </div>
+
+  <div class="card" id="message" hidden>
+    <h2 id="msgTitle"></h2>
+    <p class="muted" id="msgText"></p>
+    <button class="light" id="retry" hidden>إعادة المحاولة</button>
+  </div>
+</main>
+<script>
+  const SUPABASE_URL = 'https://aknkwzcgaenbmekmzwwj.supabase.co';
+  const ANON_KEY = 'sb_publishable_TGWs81AlDWEOKyJC_g5uAA_Z49QGMhQ';
+  const token = location.hash.slice(1).trim();
+  const $ = (id) => document.getElementById(id);
+  const store = (k, v) => { try { v === undefined ? (v = localStorage.getItem(k)) : localStorage.setItem(k, v); } catch (_) { v = null; } return v; };
+
+  // رقم عشوائي لهذا الجوال: لو النت انقطع وقت الفتح، نفس الجوال يرجع ياخذ الكرت (وغيره لا)
+  let device = store('yn_device');
+  if (!device) { device = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join(''); store('yn_device', device); }
+
+  function show(id) { for (const x of ['start', 'shown', 'message']) $(x).hidden = x !== id; }
+  function message(title, text, cls, retry) {
+    $('msgTitle').textContent = title; $('msgTitle').className = cls || '';
+    $('msgText').textContent = text; $('retry').hidden = !retry; show('message');
+  }
+  function showCard(c) {
+    $('pkg').textContent = c.name || ('فئة ' + c.face_value) + (c.data_label ? ' · ' + c.data_label : '');
+    $('code').textContent = c.username;
+    $('pass').hidden = !c.password; $('pass').textContent = c.password ? 'كلمة المرور: ' + c.password : '';
+    show('shown');
+  }
+
+  // نفس الجوال يرجع يشوف الكرت بعد ما فتحه (محفوظ عنده بس)
+  const saved = token && store('yn_card_' + token);
+  if (!token || !/^[0-9a-f]{32}$/.test(token)) message('الرابط غير صحيح', 'اطلب من المحل يرسل لك الرابط مرة ثانية.', 'bad');
+  else if (saved) showCard(JSON.parse(saved));
+
+  // الرقم ما يطلع لين يضغط الزبون: معاينات الروابط (واتساب وغيره) ما تحرق الكرت
+  async function reveal() {
+    $('reveal').disabled = true; $('reveal').textContent = 'لحظة…';
+    try {
+      const r = await fetch(SUPABASE_URL + '/rest/v1/rpc/claim_card', {
+        method: 'POST',
+        headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_token: token, p_device: device }),
+      });
+      if (!r.ok) throw new Error(r.status);
+      const c = await r.json();
+      if (c.status === 'ok') { store('yn_card_' + token, JSON.stringify(c)); showCard(c); }
+      else if (c.status === 'used') message('الكرت انفتح من قبل',
+        'هذا الرابط انفتح ' + new Date(c.opened_at).toLocaleString('ar') + '. لو ما فتحته أنت، ارجع للمحل.', 'bad');
+      else if (c.status === 'voided') message('الطلب ملغي', 'المحل ألغى هذا الطلب.', 'bad');
+      else message('الرابط غير صحيح', 'اطلب من المحل يرسل لك الرابط مرة ثانية.', 'bad');
+    } catch (e) {
+      message('ما فيه اتصال', 'تأكد من النت وجرّب مرة ثانية. الكرت ما انفتح لسا.', 'bad', true);
+    } finally {
+      $('reveal').disabled = false; $('reveal').textContent = 'اعرض رقم الكرت';
+    }
+  }
+  $('reveal').onclick = reveal;
+  $('retry').onclick = () => show('start');
+  $('copy').onclick = async () => {
+    try { await navigator.clipboard.writeText($('code').textContent); $('copy').textContent = 'انتسخ ✓'; }
+    catch (_) { $('copy').textContent = 'انسخ الرقم من فوق'; }
+  };
+</script>
+</body>
+</html>
