@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>مسح كرت يوسف نت</title>
+<style>
+  /* مسح كرت الواي فاي بالكاميرا من صفحة الهوتسبوت (زر QR CODE).
+     الكاميرا تحتاج صفحة https فالمسح هنا، وبعدها يرجع للهوتسبوت:
+     qr.html?back=<رابط صفحة الدخول> → back#yn-card=<الرقم>&yn-pass=<كلمة المرور> (index.html يعبّيها ويدخل).
+     كل شي من هذا الموقع (jsQR.js جنبها) لأن الزبون قبل الدخول ما يوصل إلا للمواقع المسموحة. */
+  :root { --navy: #073449; --sky: #5BC2EE; --bg: #F4F8FA; --card: #fff; --ink: #10222C; --muted: #5E7480;
+          --ok: #1F6B3A; --bad: #B4432F; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #08202C; --card: #0E2C3B; --ink: #EAF4F8; --muted: #9DB6C2; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink);
+         font-family: "IBM Plex Sans Arabic", Tajawal, system-ui, sans-serif; display: flex; flex-direction: column; }
+  header { background: var(--navy); color: #fff; padding: 18px 16px; text-align: center; }
+  header h1 { margin: 0; font-size: 21px; }
+  header p { margin: 4px 0 0; color: #C9E6F5; font-size: 14px; }
+  main { flex: 1; padding: 16px; max-width: 460px; width: 100%; margin: 0 auto; }
+  .card { background: var(--card); border-radius: 18px; padding: 18px; text-align: center;
+          box-shadow: 0 2px 10px rgba(7, 52, 73, .08); margin-bottom: 14px; }
+  .muted { color: var(--muted); font-size: 14px; line-height: 1.7; margin: 8px 0 0; }
+  button, .btn { display: block; font: inherit; font-weight: 700; font-size: 17px; border: 0; border-radius: 14px;
+           cursor: pointer; padding: 14px 18px; width: 100%; margin-top: 14px; background: var(--navy); color: #fff;
+           text-align: center; text-decoration: none; }
+  button.light, .btn.light { background: transparent; color: var(--ink); border: 2px solid var(--sky); }
+  .view { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 16px; overflow: hidden; background: #000; }
+  .view video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .frame { position: absolute; left: 14%; top: 14%; right: 14%; bottom: 14%; border-radius: 18px;
+           box-shadow: 0 0 0 999px rgba(0,0,0,.45); border: 3px solid rgba(255,255,255,.9); }
+  .line { position: absolute; left: 16%; right: 16%; height: 3px; top: 50%; border-radius: 3px;
+          background: var(--sky); box-shadow: 0 0 12px var(--sky); animation: scan 1.8s ease-in-out infinite; }
+  @keyframes scan { 0%, 100% { top: 18%; } 50% { top: 80%; } }
+  .tools { display: flex; gap: 10px; }
+  .tools button { margin-top: 12px; }
+  .code { font-size: 30px; font-weight: 700; letter-spacing: 2px; direction: ltr; margin: 8px 0 0;
+          word-break: break-all; }
+  .ok { color: var(--ok); } .bad { color: var(--bad); }
+  h2 { margin: 4px 0 6px; font-size: 19px; }
+  .steps { text-align: right; padding: 0; margin: 6px 0 0; list-style: none; }
+  .steps li { padding: 6px 0; font-size: 14px; color: var(--muted); }
+  .steps b { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 50%;
+             background: var(--sky); color: var(--navy); margin-left: 8px; font-size: 13px; }
+  input[type=file] { display: none; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>يوسف نت</h1>
+  <p>مسح كرت الواي فاي</p>
+</header>
+<main>
+  <div class="card" id="start">
+    <h2>امسح الباركود اللي على الكرت</h2>
+    <ul class="steps">
+      <li><b>1</b>اضغط "فتح الكاميرا" واسمح للمتصفح يستخدمها</li>
+      <li><b>2</b>وجّه الكاميرا على الباركود اللي على الكرت</li>
+      <li><b>3</b>يرجع لصفحة الشبكة ويدخل لحاله</li>
+    </ul>
+    <button id="open">فتح الكاميرا</button>
+    <label class="btn light" for="photo">أو اختر صورة الكرت</label>
+    <input type="file" id="photo" accept="image/*">
+  </div>
+
+  <div class="card" id="scan" hidden>
+    <div class="view">
+      <video id="video" playsinline muted></video>
+      <div class="frame"></div>
+      <div class="line"></div>
+    </div>
+    <p class="muted">قرّب الكرت لين يدخل الباركود في المربع</p>
+    <div class="tools">
+      <button class="light" id="torch" hidden>الفلاش</button>
+      <button class="light" id="stop">إلغاء</button>
+    </div>
+  </div>
+
+  <div class="card" id="done" hidden>
+    <h2 class="ok">تمت قراءة الكرت ✓</h2>
+    <div class="code" id="code"></div>
+    <p class="muted" id="doneText"></p>
+    <button id="copy" hidden>نسخ الرقم</button>
+    <a class="btn" id="go" hidden>الدخول للإنترنت</a>
+    <button class="light" id="again">مسح كرت ثاني</button>
+  </div>
+
+  <div class="card" id="message" hidden>
+    <h2 class="bad" id="msgTitle"></h2>
+    <p class="muted" id="msgText"></p>
+    <button class="light" id="retry">رجوع</button>
+  </div>
+  <a class="btn light" id="back" hidden>رجوع لصفحة الشبكة</a>
+</main>
+<script src="jsQR.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var cardHost = /^https:\/\/yousef-saleh\.github\.io\/yn-card\/(?:index\.html)?#[\w-]+$/;
+
+  /* نص الباركود → الكرت. الكروت المطبوعة (SmartCreator وغيره) فيها واحد من:
+     الرقم بس، الرقم وكلمة المرور (سطر/مسافة/:)، رابط دخول هوتسبوت فيه username وpassword،
+     أو رابط طلب كرت من محل (صفحة الكرت للزبائن) فيفتحه. */
+  function parseCard(text) {
+    var t = String(text || '').replace(/^\s+|\s+$/g, '');
+    if (!t) return null;
+    if (cardHost.test(t)) return { link: t };
+    if (/^https?:\/\//i.test(t)) {
+      var q = t.split('#')[0].split('?')[1] || '', p = {};
+      q.split('&').forEach(function (kv) {
+        var i = kv.indexOf('=');
+        if (i > 0) { try { p[kv.slice(0, i).toLowerCase()] = decodeURIComponent(kv.slice(i + 1).replace(/\+/g, ' ')); } catch (e) {} }
+      });
+      var u = p.username || p.user || p.u || p.card;
+      if (u) return clean(u, p.password || p.pass || p.p || '');
+      return null;
+    }
+    var parts = t.split(/[\s|:;,]+/).filter(function (s) { return s; });
+    if (parts.length === 1) return clean(parts[0], '');
+    if (parts.length === 2) return clean(parts[0], parts[1]);
+    // نص طويل: نلقط "user/username: x" و "pass/password: y"
+    var mu = t.match(/(?:user(?:name)?|اسم المستخدم|رقم الكرت|الكرت)\s*[:=]\s*(\S+)/i);
+    if (mu) {
+      var mp = t.match(/(?:pass(?:word)?|كلمة (?:المرور|السر))\s*[:=]\s*(\S+)/i);
+      return clean(mu[1], mp ? mp[1] : '');
+    }
+    return null;
+  }
+  // أرقام عربية → إنجليزية، وبدون مسافات (مثل حقل الرقم في صفحة الدخول)
+  function digits(s) {
+    return String(s).replace(/[٠-٩]/g, function (c) { return String(c.charCodeAt(0) - 0x0660); })
+                    .replace(/[۰-۹]/g, function (c) { return String(c.charCodeAt(0) - 0x06F0); })
+                    .replace(/\s+/g, '');
+  }
+  function clean(u, p) {
+    u = digits(u); p = digits(p);
+    if (!/^[\x21-\x7E]{2,64}$/.test(u) || (p && !/^[\x21-\x7E]{1,64}$/.test(p))) return null;
+    return { user: u, pass: p };
+  }
+  window.ynParseCard = parseCard;
+
+  // وين يرجع: back (رابط صفحة الدخول) أو tthh (عنوان الراوتر، صيغة الماسح القديم)
+  function backUrl() {
+    var q = {}, s = location.search.slice(1);
+    s.split('&').forEach(function (kv) {
+      var i = kv.indexOf('=');
+      if (i > 0) { try { q[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1)); } catch (e) {} }
+    });
+    var b = q.back || (q.tthh ? q.tthh.replace(/\/+$/, '') + '/index.html' : '');
+    return /^https?:\/\/[^\s"'<>]+$/i.test(b) ? b.split('#')[0] : '';
+  }
+  var back = backUrl();
+  if (back) { $('back').href = back; $('back').hidden = false; }
+
+  function show(id) {
+    ['start', 'scan', 'done', 'message'].forEach(function (k) { $(k).hidden = k !== id; });
+  }
+  function fail(title, text) { $('msgTitle').textContent = title; $('msgText').textContent = text; show('message'); }
+
+  var stream = null, timer = null, detector = null, canvas = document.createElement('canvas'),
+      ctx = canvas.getContext('2d', { willReadFrequently: true }), busy = false, found = false;
+
+  function stopCamera() {
+    if (timer) { clearTimeout(timer); timer = null; }
+    if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+  }
+
+  function decodeSource(src, w, h) {
+    // BarcodeDetector (أسرع، في كروم الأندرويد) وإلا jsQR
+    if (detector) {
+      return detector.detect(src).then(function (r) { return r.length ? r[0].rawValue : null; })
+        .catch(function () { detector = null; return decodeSource(src, w, h); });
+    }
+    if (!window.jsQR) return Promise.resolve(null);
+    var scale = Math.min(1, 720 / Math.max(w, h));
+    canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+    ctx.drawImage(src, 0, 0, canvas.width, canvas.height);
+    var img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var r = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
+    return Promise.resolve(r ? r.data : null);
+  }
+
+  function result(text) {
+    var c = parseCard(text);
+    if (!c) {
+      fail('الباركود مو كرت', 'قرينا: ' + String(text).slice(0, 80) + '\nامسح الباركود اللي على كرت الواي فاي، أو اكتب الرقم في صفحة الشبكة.');
+      return;
+    }
+    found = true;
+    stopCamera();
+    if (navigator.vibrate) { try { navigator.vibrate(80); } catch (e) {} }
+    if (c.link) { location.href = c.link; return; }
+    $('code').textContent = c.user;
+    if (back) {
+      var go = back + '#yn-card=' + encodeURIComponent(c.user) + (c.pass ? '&yn-pass=' + encodeURIComponent(c.pass) : '');
+      $('go').href = go; $('go').hidden = false; $('copy').hidden = true;
+      $('doneText').textContent = 'جاري الدخول للإنترنت…';
+      show('done');
+      setTimeout(function () { location.href = go; }, 700);
+    } else {
+      $('go').hidden = true; $('copy').hidden = false;
+      $('doneText').textContent = 'اتصل بشبكة يوسف نت، وفي صفحة الدخول اكتب الرقم.';
+      show('done');
+    }
+  }
+
+  function tick() {
+    var v = $('video');
+    if (!stream || found) return;
+    if (!busy && v.readyState >= 2 && v.videoWidth) {
+      busy = true;
+      decodeSource(v, v.videoWidth, v.videoHeight).then(function (text) {
+        busy = false;
+        if (text && !found) result(text);
+      }, function () { busy = false; });
+    }
+    timer = setTimeout(tick, 150);
+  }
+
+  function openCamera() {
+    found = false;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      fail('المتصفح ما يدعم الكاميرا', 'افتح الصفحة من كروم أو سفاري، أو اختر صورة الكرت.');
+      return;
+    }
+    if ('BarcodeDetector' in window) {
+      try { detector = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { detector = null; }
+    }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
+      .then(function (s) {
+        stream = s;
+        var v = $('video');
+        v.srcObject = s;
+        v.setAttribute('playsinline', '');
+        var p = v.play(); if (p && p.catch) p.catch(function () {});
+        show('scan');
+        var track = s.getVideoTracks()[0], caps = track && track.getCapabilities ? track.getCapabilities() : {};
+        $('torch').hidden = !caps.torch;
+        tick();
+      })
+      .catch(function (e) {
+        var denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
+        fail(denied ? 'ما سمحت للكاميرا' : 'ما قدرنا نفتح الكاميرا',
+             denied ? 'اسمح للمتصفح يستخدم الكاميرا من إعدادات الموقع وجرّب ثاني، أو اختر صورة الكرت.'
+                    : 'جرّب ثاني، أو اختر صورة الكرت.');
+      });
+  }
+
+  var torchOn = false;
+  $('torch').onclick = function () {
+    var t = stream && stream.getVideoTracks()[0];
+    if (!t) return;
+    torchOn = !torchOn;
+    t.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(function () {});
+  };
+  $('open').onclick = openCamera;
+  $('stop').onclick = function () { stopCamera(); show('start'); };
+  $('retry').onclick = function () { stopCamera(); show('start'); };
+  $('again').onclick = openCamera;
+  $('copy').onclick = function () {
+    var t = $('code').textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { $('copy').textContent = 'انتسخ ✓'; });
+  };
+  $('photo').onchange = function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function () {
+      decodeSource(img, img.naturalWidth, img.naturalHeight).then(function (text) {
+        URL.revokeObjectURL(url);
+        if (text) result(text); else fail('ما لقينا باركود في الصورة', 'صوّر الباركود قريب وواضح وجرّب ثاني.');
+      });
+    };
+    img.onerror = function () { fail('الصورة ما انفتحت', 'اختر صورة ثانية.'); };
+    img.src = url;
+    this.value = '';
+  };
+  window.addEventListener('pagehide', stopCamera);
+})();
+</script>
+</body>
+</html>
