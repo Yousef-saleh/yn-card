@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#073449">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="يوسف نت">
+<link rel="manifest" href="news.webmanifest">
+<title>قناة يوسف نت</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* قناة يوسف نت (update_v56): أخبار وعروض المدير، وكرت مجاني لكل جوال، وإشعارات المتصفح.
+     تنفتح من صفحة الهوتسبوت (news.html?mac=...) أو برابط/QR. */
+  :root { --navy: #073449; --sky: #5BC2EE; --bg: #F4F8FA; --card: #fff; --ink: #10222C; --muted: #5E7480;
+          --ok: #1F6B3A; --bad: #B4432F; --line: #DCE7EC; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #08202C; --card: #0E2C3B; --ink: #EAF4F8; --muted: #9DB6C2; --line: #1F4253; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink);
+         font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; }
+  header { background: var(--navy); color: #fff; padding: 18px 16px 14px; text-align: center; position: sticky; top: 0; z-index: 2; }
+  header h1 { margin: 0; font-size: 21px; }
+  header p { margin: 2px 0 0; color: #C9E6F5; font-size: 13px; }
+  main { padding: 14px 16px 40px; max-width: 560px; margin: 0 auto; }
+  .bell { margin: 0 0 14px; background: var(--card); border: 2px solid var(--sky); border-radius: 14px; padding: 12px 14px;
+          display: flex; gap: 10px; align-items: center; }
+  .bell p { margin: 0; flex: 1; font-size: 14px; line-height: 1.6; }
+  .post { background: var(--card); border-radius: 16px; margin-bottom: 14px; overflow: hidden;
+          box-shadow: 0 2px 10px rgba(7, 52, 73, .07); }
+  .post img { width: 100%; display: block; max-height: 360px; object-fit: cover; }
+  .pb { padding: 14px 16px; }
+  .pb h2 { margin: 0 0 6px; font-size: 18px; }
+  .pb .body { white-space: pre-wrap; line-height: 1.8; font-size: 15px; }
+  .meta { display: flex; align-items: center; gap: 10px; margin-top: 10px; color: var(--muted); font-size: 13px; }
+  .meta .sp { flex: 1; }
+  button { font: inherit; font-weight: 700; border: 0; border-radius: 12px; cursor: pointer; padding: 10px 14px;
+           background: var(--navy); color: #fff; }
+  button.like { background: transparent; color: var(--muted); border: 1px solid var(--line); padding: 6px 12px; font-weight: 600; }
+  button.like.on { color: var(--bad); border-color: var(--bad); }
+  .free { margin-top: 12px; border: 2px dashed var(--sky); border-radius: 14px; padding: 12px; text-align: center; }
+  .free .code { font-size: 28px; font-weight: 700; letter-spacing: 2px; direction: ltr; margin: 6px 0 2px; word-break: break-all; }
+  .free button { width: 100%; margin-top: 8px; font-size: 16px; padding: 12px; }
+  .muted { color: var(--muted); font-size: 13px; line-height: 1.7; }
+  .bad { color: var(--bad); } .ok { color: var(--ok); }
+  .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
+  .join { background: var(--card); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(7, 52, 73, .07); }
+  .join h3 { margin: 0 0 4px; font-size: 17px; }
+  .join input { font: inherit; font-size: 15px; width: 100%; margin-top: 8px; padding: 10px 12px; border-radius: 10px;
+                border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+  .join button { width: 100%; margin-top: 10px; padding: 12px; font-size: 16px; }
+  .join .leave { background: transparent; color: var(--muted); padding: 4px; font-size: 13px; font-weight: 600; width: auto; margin: 0; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; color: var(--navy); background: var(--sky); border-radius: 999px; padding: 1px 10px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>قناة يوسف نت</h1>
+  <p>العروض والكروت المجانية وأخبار الشبكة</p>
+</header>
+<main>
+  <div class="join" id="join" hidden>
+    <div id="joinForm">
+      <h3>انضم لقناة يوسف نت</h3>
+      <div class="muted">العضو يوصله كل عرض، وفيه كروت مجانية للأعضاء بس، ولو فعّلت الإشعارات ننبّهك قبل ما يخلص كرتك</div>
+      <input id="jName" maxlength="40" placeholder="اسمك" autocomplete="name">
+      <input id="jPhone" maxlength="16" inputmode="tel" placeholder="رقم جوالك (اختياري)" autocomplete="tel" dir="ltr">
+      <div class="bad" id="jErr"></div>
+      <button id="jBtn" type="button">انضم</button>
+    </div>
+    <div id="joined" hidden style="display:flex;align-items:center;gap:8px">
+      <div style="flex:1"><span class="tag">عضو</span> <b id="jHello"></b></div>
+      <button class="leave" id="jLeave" type="button">خروج من القناة</button>
+    </div>
+  </div>
+  <div class="bell" id="bell" hidden>
+    <p id="bellText">فعّل الإشعارات عشان يوصلك كل عرض وكرت مجاني أول بأول، وتنبيه قبل ما يخلص كرتك (للأعضاء)</p>
+    <button id="bellBtn" type="button">🔔 فعّل</button>
+  </div>
+  <div id="list"><div class="empty">جاري التحميل…</div></div>
+</main>
+<script>
+(function () {
+  const SUPABASE_URL = 'https://aknkwzcgaenbmekmzwwj.supabase.co';
+  const ANON_KEY = 'sb_publishable_TGWs81AlDWEOKyJC_g5uAA_Z49QGMhQ';
+  const IMG = SUPABASE_URL + '/storage/v1/object/public/news/';
+  const q = new URLSearchParams(location.search);
+  // الماك من صفحة الهوتسبوت (لازم للكرت المجاني)؛ ينحفظ عشان لو انفتحت بعدين من الإشعار
+  const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; };
+  let mac = (q.get('mac') || '').replace(/[^0-9A-Fa-f:]/g, '');
+  if (mac.replace(/:/g, '').length === 12) ls('yn-news-mac', mac); else mac = ls('yn-news-mac') || '';
+  let dev = ls('yn-news-dev');
+  if (!dev || !/^[A-Za-z0-9_-]{16,64}$/.test(dev)) {
+    dev = ''; const c = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < 24; i++) dev += c.charAt(Math.floor(Math.random() * 36));
+    ls('yn-news-dev', dev);
+  }
+  let me = null; // عضو القناة (news_me)
+  async function rpc(fn, body) {
+    const r = await fetch(SUPABASE_URL + '/rest/v1/rpc/' + fn, {
+      method: 'POST',
+      headers: { 'apikey': ANON_KEY, 'Authorization': 'Bearer ' + ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  }
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const when = (t) => new Date(t).toLocaleString('ar', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' });
+
+  function freeBox(p) {
+    const box = el('div', 'free');
+    if (p.my_card) {
+      box.appendChild(el('div', 'ok', '🎁 كرتك المجاني'));
+      box.appendChild(el('div', 'code', p.my_card.username));
+      if (p.my_card.password) box.appendChild(el('div', 'muted', 'كلمة المرور: ' + p.my_card.password));
+      box.appendChild(el('div', 'muted', 'ادخل فيه من صفحة شبكة يوسف نت'));
+      return box;
+    }
+    box.appendChild(el('div', '', '🎁 ' + p.free_left + ' كرت مجاني باقي من ' + p.free_total + (p.members_only ? ' · للأعضاء' : '')));
+    const b = el('button', '', p.free_left > 0 ? 'خذ كرتك المجاني' : 'خلصت الكروت');
+    b.type = 'button'; b.disabled = p.free_left <= 0;
+    const note = el('div', 'muted');
+    b.onclick = async () => {
+      if (p.members_only && !me) { note.className = 'bad'; note.textContent = 'هذا العرض للأعضاء: انضم للقناة فوق وبعدها خذ كرتك'; window.scrollTo(0, 0); return; }
+      if (mac.replace(/:/g, '').length !== 12) { note.className = 'bad'; note.textContent = 'افتح القناة من صفحة شبكة يوسف نت (وأنت متصل بالواي فاي) عشان تاخذ الكرت'; return; }
+      b.disabled = true; b.textContent = 'لحظة…';
+      try {
+        const r = await rpc('news_claim', { p_post: p.id, p_device: dev, p_mac: mac });
+        if (r.ok) { p.my_card = { username: r.username, password: r.password }; box.replaceWith(freeBox(p)); return; }
+        note.className = 'bad';
+        note.textContent = r.error === 'finished' ? 'خلصت الكروت، انتظر العرض الجاي' : r.error === 'members_only'
+          ? 'هذا العرض للأعضاء: انضم للقناة فوق' : r.error === 'not_here'
+          ? 'هذا العرض لمنطقة ثانية' : r.error === 'need_wifi'
+          ? 'افتح القناة من صفحة شبكة يوسف نت عشان تاخذ الكرت' : 'ما قدرنا نعطيك الكرت، جرّب مرة ثانية';
+        b.textContent = 'خذ كرتك المجاني'; b.disabled = r.error === 'finished';
+      } catch (e) { note.className = 'bad'; note.textContent = 'تأكد إنك متصل بالنت وجرّب مرة ثانية'; b.disabled = false; b.textContent = 'خذ كرتك المجاني'; }
+    };
+    box.appendChild(b); box.appendChild(note);
+    return box;
+  }
+
+  function render(posts) {
+    const list = document.getElementById('list');
+    list.innerHTML = '';
+    if (!posts.length) { list.appendChild(el('div', 'empty', 'ما فيه أخبار لين الحين')); return; }
+    for (const p of posts) {
+      const card = el('article', 'post');
+      if (p.image) { const im = el('img'); im.src = IMG + p.image; im.alt = ''; im.loading = 'lazy'; card.appendChild(im); }
+      const pb = el('div', 'pb');
+      pb.appendChild(el('h2', '', p.title));
+      if (p.body) pb.appendChild(el('div', 'body', p.body));
+      if (p.free_total > 0) pb.appendChild(freeBox(p));
+      const meta = el('div', 'meta');
+      meta.appendChild(el('span', '', when(p.at)));
+      meta.appendChild(el('span', 'sp'));
+      const like = el('button', 'like' + (p.liked ? ' on' : ''), (p.liked ? '❤️ ' : '🤍 ') + (p.likes || 0));
+      like.type = 'button';
+      like.onclick = async () => {
+        try {
+          const n = await rpc('news_like', { p_post: p.id, p_device: dev });
+          p.liked = !p.liked; p.likes = n; like.className = 'like' + (p.liked ? ' on' : ''); like.textContent = (p.liked ? '❤️ ' : '🤍 ') + n;
+        } catch (e) {}
+      };
+      meta.appendChild(like);
+      pb.appendChild(meta);
+      card.appendChild(pb);
+      list.appendChild(card);
+    }
+    if (posts[0]) ls('yn-news-seen', String(posts[0].id));
+  }
+
+  async function load() {
+    try { render(await rpc('news_feed', { p_device: dev, p_limit: 30 })); }
+    catch (e) { document.getElementById('list').innerHTML = '<div class="empty">ما قدرنا نحمّل الأخبار: تأكد إنك متصل بالنت</div>'; }
+  }
+
+  // ---------- الإشعارات (Web Push) ----------
+  const b64 = (s) => { const p = '='.repeat((4 - s.length % 4) % 4); const raw = atob((s + p).replace(/-/g, '+').replace(/_/g, '/'));
+    return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
+  async function setupBell() {
+    const bell = document.getElementById('bell'), btn = document.getElementById('bellBtn'), txt = document.getElementById('bellText');
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      if (ios && !standalone) { bell.hidden = false; btn.hidden = true;
+        txt.textContent = 'للإشعارات على الآيفون: اضغط زر المشاركة ⬆️ ثم "إضافة إلى الشاشة الرئيسية"، وافتح القناة من هناك'; }
+      return;
+    }
+    const reg = await navigator.serviceWorker.register('news-sw.js');
+    const sub = await reg.pushManager.getSubscription();
+    if (sub && Notification.permission === 'granted') return; // مشترك
+    if (Notification.permission === 'denied') return;
+    bell.hidden = false;
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        const key = await rpc('news_vapid_public', {});
+        if (!key) throw new Error('no key');
+        const s = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
+        const j = s.toJSON();
+        await rpc('news_subscribe', { p_endpoint: j.endpoint, p_p256dh: j.keys && j.keys.p256dh, p_auth: j.keys && j.keys.auth, p_device: dev });
+        txt.textContent = '✅ تفعّلت: يوصلك إشعار مع كل عرض جديد'; btn.hidden = true;
+      } catch (e) {
+        btn.disabled = false;
+        txt.textContent = Notification.permission === 'denied' ? 'الإشعارات مقفولة من إعدادات المتصفح' : 'ما تفعّلت، جرّب مرة ثانية وأنت متصل بالنت';
+      }
+    };
+  }
+
+  // ---------- الانضمام (اختياري) ----------
+  function showMe() {
+    document.getElementById('join').hidden = false;
+    document.getElementById('joinForm').hidden = !!me;
+    document.getElementById('joined').hidden = !me;
+    if (me) document.getElementById('jHello').textContent = 'أهلاً ' + me.name;
+  }
+  document.getElementById('jBtn').onclick = async () => {
+    const name = document.getElementById('jName').value.trim(), phone = document.getElementById('jPhone').value.trim();
+    const err = document.getElementById('jErr');
+    if (!name) { err.textContent = 'اكتب اسمك'; return; }
+    try {
+      const r = await rpc('news_join', { p_device: dev, p_name: name, p_phone: phone || null, p_mac: mac || null,
+        p_ua: String(navigator.userAgent || '').slice(0, 300) });
+      if (!r.ok) { err.textContent = r.error === 'phone' ? 'رقم الجوال غلط' : 'ما قدرنا نضيفك، جرّب بعد شوي'; return; }
+      me = { name: r.name, phone: r.phone }; err.textContent = ''; showMe(); load();
+      document.getElementById('bellBtn').click();
+    } catch (e) { err.textContent = 'تأكد إنك متصل بالنت وجرّب مرة ثانية'; }
+  };
+  document.getElementById('jLeave').onclick = async () => {
+    if (!confirm('تطلع من القناة؟')) return;
+    try { await rpc('news_leave', { p_device: dev }); me = null; showMe(); } catch (e) {}
+  };
+
+  rpc('news_me', { p_device: dev, p_mac: mac || null }).then((m) => { me = m; showMe(); }).catch(() => {}).finally(load);
+  setupBell().catch(() => {});
+})();
+</script>
+</body>
+</html>
