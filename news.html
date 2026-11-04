@@ -44,9 +44,21 @@
   .free { margin-top: 12px; border: 2px dashed var(--sky); border-radius: 14px; padding: 12px; text-align: center; }
   .free .code { font-size: 28px; font-weight: 700; letter-spacing: 2px; direction: ltr; margin: 6px 0 2px; word-break: break-all; }
   .free button { width: 100%; margin-top: 8px; font-size: 16px; padding: 12px; }
+  .free.draw { border-style: solid; background: rgba(91, 194, 238, .08); }
+  .free .big { font-size: 20px; font-weight: 700; margin: 4px 0; }
+  .free .win { font-size: 18px; font-weight: 700; color: var(--sky); margin-top: 4px; }
   .muted { color: var(--muted); font-size: 13px; line-height: 1.7; }
   .bad { color: var(--bad); } .ok { color: var(--ok); }
   .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
+  .chat { background: var(--card); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; border: 2px solid var(--sky); }
+  .chat h3 { margin: 0 0 8px; font-size: 17px; }
+  .chat .msgs { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+  .chat .m { max-width: 85%; padding: 8px 12px; border-radius: 14px; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+  .chat .m.a { align-self: flex-start; background: rgba(91, 194, 238, .18); }
+  .chat .m.me { align-self: flex-end; background: var(--navy); color: #fff; }
+  .chat .m small { display: block; opacity: .65; font-size: 11px; margin-top: 2px; }
+  .chat form { display: flex; gap: 6px; margin-top: 8px; }
+  .chat input { flex: 1; min-width: 0; }
   .join { background: var(--card); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(7, 52, 73, .07); }
   .join h3 { margin: 0 0 4px; font-size: 17px; }
   .join input { font: inherit; font-size: 15px; width: 100%; margin-top: 8px; padding: 10px 12px; border-radius: 10px;
@@ -76,6 +88,12 @@
       <div style="flex:1"><span class="tag">عضو</span> <b id="jHello"></b></div>
       <button class="leave" id="jLeave" type="button">خروج من القناة</button>
     </div>
+  </div>
+  <div class="chat" id="chat" hidden>
+    <h3>💬 رسائلك مع يوسف نت</h3>
+    <div class="msgs" id="cMsgs"></div>
+    <form id="cForm"><input id="cText" maxlength="500" placeholder="اكتب ردك…" autocomplete="off"><button type="submit">إرسال</button></form>
+    <div class="bad" id="cErr"></div>
   </div>
   <div class="bell" id="bell" hidden>
     <p id="bellText">فعّل الإشعارات عشان يوصلك كل عرض وكرت مجاني أول بأول، وتنبيه قبل ما يخلص كرتك (للأعضاء)</p>
@@ -135,12 +153,49 @@
         note.className = 'bad';
         note.textContent = r.error === 'finished' ? 'خلصت الكروت، انتظر العرض الجاي' : r.error === 'members_only'
           ? 'هذا العرض للأعضاء: انضم للقناة فوق' : r.error === 'not_here'
-          ? 'هذا العرض لمنطقة ثانية' : r.error === 'need_wifi'
+          ? 'هذا العرض لمنطقة ثانية' : r.error === 'draw' ? 'هذا سحب: اشترك فيه وانتظر النتيجة' : r.error === 'need_wifi'
           ? 'افتح القناة من صفحة شبكة يوسف نت عشان تاخذ الكرت' : 'ما قدرنا نعطيك الكرت، جرّب مرة ثانية';
         b.textContent = 'خذ كرتك المجاني'; b.disabled = r.error === 'finished';
       } catch (e) { note.className = 'bad'; note.textContent = 'تأكد إنك متصل بالنت وجرّب مرة ثانية'; b.disabled = false; b.textContent = 'خذ كرتك المجاني'; }
     };
     box.appendChild(b); box.appendChild(note);
+    return box;
+  }
+
+  let draws = {}; // السحوبات (news_draw_info، update_v58)
+
+  // خبر سحب: قبل الوقت "اشترك في السحب"، وبعده الفائزين (والفائز يطلع له كرته من my_card)
+  function drawBox(p, d) {
+    if (p.my_card) return freeBox(p);
+    const box = el('div', 'free draw');
+    if (d.drawn) {
+      box.appendChild(el('div', 'big', '🎉 انسحب السحب'));
+      box.appendChild(el('div', 'win', d.winners.length ? 'الفائز: ' + d.winners.join('، ') : 'ما اشترك أحد'));
+      if (p.free_left > 0) { box.appendChild(el('div', 'muted', 'باقي ' + p.free_left + ' كرت للأسرع من الأعضاء')); box.appendChild(freeBox(p)); }
+      else box.appendChild(el('div', 'muted', 'انتظر السحب الجاي، ولا تنسى تفعّل الإشعارات'));
+      return box;
+    }
+    box.appendChild(el('div', 'big', '🎟️ سحب على ' + p.free_total + (p.free_total === 1 ? ' كرت مجاني' : ' كروت مجانية')));
+    box.appendChild(el('div', 'muted', 'السحب: ' + when(d.draw_at) + ' · ' + d.entries + ' مشترك'));
+    const note = el('div', 'muted');
+    const b = el('button', '', d.entered ? '✅ أنت مشترك في السحب' : 'اشترك في السحب');
+    b.type = 'button'; b.disabled = d.entered;
+    b.onclick = async () => {
+      if (!me) { note.className = 'bad'; note.textContent = 'السحب للأعضاء: انضم للقناة فوق وبعدها اشترك'; window.scrollTo(0, 0); return; }
+      if (mac.replace(/:/g, '').length !== 12) { note.className = 'bad'; note.textContent = 'افتح القناة من صفحة شبكة يوسف نت (وأنت متصل بالواي فاي) عشان تشترك'; return; }
+      b.disabled = true; b.textContent = 'لحظة…';
+      try {
+        const r = await rpc('news_draw_enter', { p_post: p.id, p_device: dev, p_mac: mac });
+        if (r.ok) { d.entered = true; d.entries = r.entries; box.replaceWith(drawBox(p, d)); return; }
+        note.className = 'bad';
+        note.textContent = r.error === 'closed' ? 'انتهى وقت الاشتراك، النتيجة قريب' : r.error === 'members_only'
+          ? 'السحب للأعضاء: انضم للقناة فوق' : r.error === 'not_here' ? 'هذا السحب لمنطقة ثانية' : r.error === 'need_wifi'
+          ? 'افتح القناة من صفحة شبكة يوسف نت عشان تشترك' : 'ما قدرنا نسجّلك، جرّب مرة ثانية';
+        b.textContent = 'اشترك في السحب'; b.disabled = r.error === 'closed';
+      } catch (e) { note.className = 'bad'; note.textContent = 'تأكد إنك متصل بالنت وجرّب مرة ثانية'; b.disabled = false; b.textContent = 'اشترك في السحب'; }
+    };
+    box.appendChild(b); box.appendChild(note);
+    if (!d.entered) box.appendChild(el('div', 'muted', 'فعّل الإشعارات عشان يوصلك لو فزت'));
     return box;
   }
 
@@ -154,7 +209,7 @@
       const pb = el('div', 'pb');
       pb.appendChild(el('h2', '', p.title));
       if (p.body) pb.appendChild(el('div', 'body', p.body));
-      if (p.free_total > 0) pb.appendChild(freeBox(p));
+      if (p.free_total > 0) pb.appendChild(draws[p.id] ? drawBox(p, draws[p.id]) : freeBox(p));
       const meta = el('div', 'meta');
       meta.appendChild(el('span', '', when(p.at)));
       meta.appendChild(el('span', 'sp'));
@@ -175,7 +230,11 @@
   }
 
   async function load() {
-    try { render(await rpc('news_feed', { p_device: dev, p_limit: 30 })); }
+    try {
+      const feed = rpc('news_feed', { p_device: dev, p_limit: 30 });
+      try { draws = {}; for (const d of await rpc('news_draw_info', { p_device: dev })) draws[d.id] = d; } catch (e) {} // قبل v58
+      render(await feed);
+    }
     catch (e) { document.getElementById('list').innerHTML = '<div class="empty">ما قدرنا نحمّل الأخبار: تأكد إنك متصل بالنت</div>'; }
   }
 
@@ -236,7 +295,42 @@
     try { await rpc('news_leave', { p_device: dev }); me = null; showMe(); } catch (e) {}
   };
 
-  rpc('news_me', { p_device: dev, p_mac: mac || null }).then((m) => { me = m; showMe(); }).catch(() => {}).finally(load);
+  // ---------- رسائل المدير للعضو (update_v58) ----------
+  let chatLast = 0;
+  async function loadChat() {
+    if (!me) { document.getElementById('chat').hidden = true; return; }
+    let msgs;
+    try { msgs = await rpc('news_chat', { p_device: dev }); } catch (e) { return; } // قبل v58
+    const box = document.getElementById('chat');
+    if (!msgs.length) { box.hidden = true; return; }
+    box.hidden = false;
+    const last = msgs[msgs.length - 1].id;
+    if (last === chatLast) return;
+    chatLast = last;
+    const list = document.getElementById('cMsgs');
+    list.innerHTML = '';
+    for (const m of msgs) {
+      const d = el('div', 'm ' + (m.admin ? 'a' : 'me'), m.body);
+      d.appendChild(el('small', '', (m.admin ? 'يوسف نت · ' : '') + when(m.at)));
+      list.appendChild(d);
+    }
+    list.scrollTop = list.scrollHeight;
+    if (location.hash === '#chat') box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  document.getElementById('cForm').onsubmit = async (ev) => {
+    ev.preventDefault();
+    const inp = document.getElementById('cText'), err = document.getElementById('cErr'), text = inp.value.trim();
+    if (!text) return;
+    try {
+      const r = await rpc('news_chat_send', { p_device: dev, p_text: text });
+      if (!r.ok) { err.textContent = r.error === 'too_many' ? 'أرسلت كثير، انتظر شوي' : r.error === 'blocked' ? 'ما تقدر ترسل' : 'ما انرسلت، جرّب مرة ثانية'; return; }
+      inp.value = ''; err.textContent = ''; chatLast = 0; loadChat();
+    } catch (e) { err.textContent = 'تأكد إنك متصل بالنت وجرّب مرة ثانية'; }
+  };
+  setInterval(() => { if (!document.hidden) loadChat(); }, 15000);
+  window.addEventListener('hashchange', () => { chatLast = 0; loadChat(); });
+
+  rpc('news_me', { p_device: dev, p_mac: mac || null }).then((m) => { me = m; showMe(); loadChat(); }).catch(() => {}).finally(load);
   setupBell().catch(() => {});
 })();
 </script>
