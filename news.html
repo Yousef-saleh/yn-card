@@ -50,6 +50,9 @@
   .muted { color: var(--muted); font-size: 13px; line-height: 1.7; }
   .bad { color: var(--bad); } .ok { color: var(--ok); }
   .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
+  .bell.urgent { border-color: #E53935; background: rgba(229, 57, 53, .08); animation: ynPulse 1.6s ease-in-out 3; }
+  .bell.urgent button { background: #E53935; color: #fff; }
+  @keyframes ynPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
   .chat { background: var(--card); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; border: 2px solid var(--sky); }
   .chat h3 { margin: 0 0 8px; font-size: 17px; }
   .chat .msgs { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
@@ -153,7 +156,8 @@
         note.className = 'bad';
         note.textContent = r.error === 'finished' ? 'خلصت الكروت، انتظر العرض الجاي' : r.error === 'members_only'
           ? 'هذا العرض للأعضاء: انضم للقناة فوق' : r.error === 'not_here'
-          ? 'هذا العرض لمنطقة ثانية' : r.error === 'draw' ? 'هذا سحب: اشترك فيه وانتظر النتيجة' : r.error === 'need_wifi'
+          ? 'هذا العرض لمنطقة ثانية' : r.error === 'draw' ? 'هذا سحب: اشترك فيه وانتظر النتيجة'
+          : r.error === 'banned' ? 'هذا العرض مو متاح لك' : r.error === 'need_wifi'
           ? 'افتح القناة من صفحة شبكة يوسف نت عشان تاخذ الكرت' : 'ما قدرنا نعطيك الكرت، جرّب مرة ثانية';
         b.textContent = 'خذ كرتك المجاني'; b.disabled = r.error === 'finished';
       } catch (e) { note.className = 'bad'; note.textContent = 'تأكد إنك متصل بالنت وجرّب مرة ثانية'; b.disabled = false; b.textContent = 'خذ كرتك المجاني'; }
@@ -184,18 +188,29 @@
       if (!me) { note.className = 'bad'; note.textContent = 'السحب للأعضاء: انضم للقناة فوق وبعدها اشترك'; window.scrollTo(0, 0); return; }
       if (mac.replace(/:/g, '').length !== 12) { note.className = 'bad'; note.textContent = 'افتح القناة من صفحة شبكة يوسف نت (وأنت متصل بالواي فاي) عشان تشترك'; return; }
       b.disabled = true; b.textContent = 'لحظة…';
+      // لازم الإشعارات عشان يوصله لو فاز
+      const ps = await enablePush();
+      if (ps === 'denied' || ps === 'error' || ps === 'off') {
+        note.className = 'bad';
+        note.textContent = ps === 'denied' ? 'لازم الإشعارات عشان تشترك. ' + DENIED
+          : ps === 'error' ? 'ما تفعّلت الإشعارات: ادخل النت بكرتك وارجع هنا واشترك (لازم الإشعارات عشان يوصلك لو فزت)'
+          : 'لازم توافق على الإشعارات عشان تشترك (يوصلك لو فزت)';
+        b.disabled = false; b.textContent = 'اشترك في السحب'; return;
+      }
       try {
-        const r = await rpc('news_draw_enter', { p_post: p.id, p_device: dev, p_mac: mac });
+        const r = await rpc('news_draw_enter', { p_post: p.id, p_device: dev, p_mac: mac, p_no_push: ps === 'unsupported' });
         if (r.ok) { d.entered = true; d.entries = r.entries; box.replaceWith(drawBox(p, d)); return; }
         note.className = 'bad';
         note.textContent = r.error === 'closed' ? 'انتهى وقت الاشتراك، النتيجة قريب' : r.error === 'members_only'
-          ? 'السحب للأعضاء: انضم للقناة فوق' : r.error === 'not_here' ? 'هذا السحب لمنطقة ثانية' : r.error === 'need_wifi'
+          ? 'السحب للأعضاء: انضم للقناة فوق' : r.error === 'not_here' ? 'هذا السحب لمنطقة ثانية'
+          : r.error === 'banned' ? 'ما تقدر تشترك في هذا السحب' : r.error === 'need_push' ? 'لازم تفعّل الإشعارات عشان تشترك'
+          : r.error === 'need_wifi'
           ? 'افتح القناة من صفحة شبكة يوسف نت عشان تشترك' : 'ما قدرنا نسجّلك، جرّب مرة ثانية';
         b.textContent = 'اشترك في السحب'; b.disabled = r.error === 'closed';
       } catch (e) { note.className = 'bad'; note.textContent = 'تأكد إنك متصل بالنت وجرّب مرة ثانية'; b.disabled = false; b.textContent = 'اشترك في السحب'; }
     };
     box.appendChild(b); box.appendChild(note);
-    if (!d.entered) box.appendChild(el('div', 'muted', 'فعّل الإشعارات عشان يوصلك لو فزت'));
+    if (!d.entered) box.appendChild(el('div', 'muted', 'لازم الإشعارات مفعّلة عشان يوصلك لو فزت'));
     return box;
   }
 
@@ -241,33 +256,63 @@
   // ---------- الإشعارات (Web Push) ----------
   const b64 = (s) => { const p = '='.repeat((4 - s.length % 4) % 4); const raw = atob((s + p).replace(/-/g, '+').replace(/_/g, '/'));
     return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
-  async function setupBell() {
-    const bell = document.getElementById('bell'), btn = document.getElementById('bellBtn'), txt = document.getElementById('bellText');
-    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
-    const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      if (ios && !standalone) { bell.hidden = false; btn.hidden = true;
-        txt.textContent = 'للإشعارات على الآيفون: اضغط زر المشاركة ⬆️ ثم "إضافة إلى الشاشة الرئيسية"، وافتح القناة من هناك'; }
-      return;
-    }
-    const reg = await navigator.serviceWorker.register('news-sw.js');
+  // ---------- الإشعارات ----------
+  // 'on' مفعّلة، 'off' مو مفعّلة (نقدر نطلبها)، 'denied' مقفولة من المتصفح، 'unsupported' المتصفح ما يدعمها
+  // (الآيفون بس لو الصفحة مضافة للشاشة الرئيسية)
+  const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  let reg = null;
+  async function pushState() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'unsupported';
+    try { reg = reg || await navigator.serviceWorker.register('news-sw.js'); } catch (e) { return 'unsupported'; }
+    if (Notification.permission === 'denied') return 'denied';
     const sub = await reg.pushManager.getSubscription();
-    if (sub && Notification.permission === 'granted') return; // مشترك
-    if (Notification.permission === 'denied') return;
-    bell.hidden = false;
+    if (sub && Notification.permission === 'granted') {
+      // نتأكد إن السيرفر عنده الاشتراك مربوط بهالجهاز
+      const j = sub.toJSON();
+      rpc('news_subscribe', { p_endpoint: j.endpoint, p_p256dh: j.keys && j.keys.p256dh, p_auth: j.keys && j.keys.auth, p_device: dev }).catch(() => {});
+      return 'on';
+    }
+    return 'off';
+  }
+  async function enablePush() {
+    const st = await pushState();
+    if (st !== 'off') return st;
+    try {
+      const key = await rpc('news_vapid_public', {});
+      if (!key) return 'error';
+      const s = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
+      const j = s.toJSON();
+      await rpc('news_subscribe', { p_endpoint: j.endpoint, p_p256dh: j.keys && j.keys.p256dh, p_auth: j.keys && j.keys.auth, p_device: dev });
+      showBell('on');
+      return 'on';
+    } catch (e) {
+      return Notification.permission === 'denied' ? 'denied' : 'error';
+    }
+  }
+  const DENIED = 'الإشعارات مقفولة: افتح إعدادات المتصفح ← إعدادات المواقع ← الإشعارات، واسمح لهذا الموقع';
+  const IOS_HINT = 'للإشعارات على الآيفون: اضغط زر المشاركة ⬆️ ثم "إضافة إلى الشاشة الرئيسية"، وافتح القناة من هناك';
+  function showBell(st) {
+    const bell = document.getElementById('bell'), btn = document.getElementById('bellBtn'), txt = document.getElementById('bellText');
+    bell.hidden = st === 'on' && !bell.dataset.done;
+    if (st === 'on') { if (bell.dataset.done) { txt.textContent = '✅ تفعّلت: يوصلك إشعار مع كل عرض جديد'; btn.hidden = true; } return; }
+    if (st === 'unsupported') { bell.hidden = !isIos || standalone; btn.hidden = true; txt.textContent = IOS_HINT; return; }
+    btn.hidden = st === 'denied';
+    // العضو بدون إشعارات: تذكير واضح كل ما يفتح القناة (ما يقدر يشترك في السحب ولا يوصله لو فاز)
+    bell.classList.toggle('urgent', !!me && st === 'off');
+    txt.textContent = st === 'denied' ? DENIED
+      : me ? '🔔 فعّل الإشعارات عشان تقدر تشترك في السحب ويوصلك لو فزت'
+      : 'فعّل الإشعارات عشان يوصلك كل عرض وكرت مجاني أول بأول، وتنبيه قبل ما يخلص كرتك';
+  }
+  async function setupBell() {
+    const btn = document.getElementById('bellBtn'), txt = document.getElementById('bellText');
+    showBell(await pushState());
     btn.onclick = async () => {
       btn.disabled = true;
-      try {
-        const key = await rpc('news_vapid_public', {});
-        if (!key) throw new Error('no key');
-        const s = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64(key) });
-        const j = s.toJSON();
-        await rpc('news_subscribe', { p_endpoint: j.endpoint, p_p256dh: j.keys && j.keys.p256dh, p_auth: j.keys && j.keys.auth, p_device: dev });
-        txt.textContent = '✅ تفعّلت: يوصلك إشعار مع كل عرض جديد'; btn.hidden = true;
-      } catch (e) {
-        btn.disabled = false;
-        txt.textContent = Notification.permission === 'denied' ? 'الإشعارات مقفولة من إعدادات المتصفح' : 'ما تفعّلت، جرّب مرة ثانية وأنت متصل بالنت';
-      }
+      const r = await enablePush();
+      btn.disabled = false;
+      if (r === 'on') { document.getElementById('bell').dataset.done = '1'; showBell('on'); }
+      else txt.textContent = r === 'denied' ? DENIED : 'ما تفعّلت: ادخل النت بكرتك وارجع اضغط "فعّل"';
     };
   }
 
@@ -282,12 +327,17 @@
     const name = document.getElementById('jName').value.trim(), phone = document.getElementById('jPhone').value.trim();
     const err = document.getElementById('jErr');
     if (!name) { err.textContent = 'اكتب اسمك'; return; }
+    // الإشعارات لازم قبل الانضمام (إلا الآيفون من المتصفح: ما يدعمها إلا من الشاشة الرئيسية)
+    const ps = await enablePush();
+    if (ps === 'denied') { err.textContent = 'لازم تفعّل الإشعارات عشان تنضم. ' + DENIED; return; }
+    if (ps === 'off') { err.textContent = 'لازم توافق على الإشعارات عشان تنضم، اضغط "انضم" مرة ثانية واختر "سماح"'; return; }
+    // 'error' غالباً لأنه لسا ما دخل النت بكرت (خادم الإشعارات ما يوصل): ينضم، والجرس يذكّره بعدين
     try {
       const r = await rpc('news_join', { p_device: dev, p_name: name, p_phone: phone || null, p_mac: mac || null,
         p_ua: String(navigator.userAgent || '').slice(0, 300) });
       if (!r.ok) { err.textContent = r.error === 'phone' ? 'رقم الجوال غلط' : 'ما قدرنا نضيفك، جرّب بعد شوي'; return; }
       me = { name: r.name, phone: r.phone }; err.textContent = ''; showMe(); load();
-      document.getElementById('bellBtn').click();
+      showBell(await pushState());
     } catch (e) { err.textContent = 'تأكد إنك متصل بالنت وجرّب مرة ثانية'; }
   };
   document.getElementById('jLeave').onclick = async () => {
@@ -330,7 +380,7 @@
   setInterval(() => { if (!document.hidden) loadChat(); }, 15000);
   window.addEventListener('hashchange', () => { chatLast = 0; loadChat(); });
 
-  rpc('news_me', { p_device: dev, p_mac: mac || null }).then((m) => { me = m; showMe(); loadChat(); }).catch(() => {}).finally(load);
+  rpc('news_me', { p_device: dev, p_mac: mac || null }).then((m) => { me = m; showMe(); loadChat(); pushState().then(showBell).catch(() => {}); }).catch(() => {}).finally(load);
   setupBell().catch(() => {});
 })();
 </script>
