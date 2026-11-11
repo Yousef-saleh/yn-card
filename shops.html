@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>دليل المحلات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* دليل أصحاب المحلات لتطبيق يوسف نت: يرسله المدير مع رابط التطبيق. الصور من screens_test (E2E_SHOTS) في shops/ */
+  :root { --navy: #073449; --sky: #5BC2EE; --bg: #F4F8FA; --card: #fff; --ink: #10222C; --muted: #5E7480;
+          --tint: #E2F3FC; --warn: #6B450B; --warnbg: #FFF3D6; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #08202C; --card: #0E2C3B; --ink: #EAF4F8; --muted: #9DB6C2;
+      --tint: #123A4D; --warn: #FFD98A; --warnbg: #3A2F12; }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.8;
+         font-family: "IBM Plex Sans Arabic", system-ui, sans-serif; }
+  header { background: var(--navy); color: #fff; padding: 28px 16px 22px; text-align: center; }
+  header h1 { margin: 0; font-size: 24px; }
+  header p { margin: 6px 0 0; color: #C9E6F5; font-size: 15px; }
+  main { max-width: 720px; margin: 0 auto; padding: 18px 16px 40px; }
+  nav { background: var(--card); border-radius: 18px; padding: 14px 18px; margin-bottom: 16px;
+        box-shadow: 0 2px 10px rgba(7, 52, 73, .08); }
+  nav b { display: block; margin-bottom: 4px; }
+  nav a { display: block; color: var(--ink); text-decoration: none; padding: 3px 0; }
+  nav a::before { content: "‹ "; color: var(--sky); font-weight: 700; }
+  section { background: var(--card); border-radius: 18px; padding: 18px; margin-bottom: 16px;
+            box-shadow: 0 2px 10px rgba(7, 52, 73, .08); }
+  h2 { margin: 0 0 10px; font-size: 19px; display: flex; align-items: center; gap: 10px; }
+  .n { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--navy); color: #fff;
+       display: inline-flex; align-items: center; justify-content: center; font-size: 16px; }
+  ol, ul { margin: 6px 0; padding-inline-start: 22px; }
+  li { margin: 4px 0; }
+  .btn { display: inline-block; background: var(--tint); color: var(--ink); border-radius: 8px; padding: 0 8px;
+         font-weight: 600; white-space: nowrap; }
+  .shots { display: flex; gap: 12px; overflow-x: auto; padding: 8px 2px 4px; scroll-snap-type: x mandatory; }
+  figure { margin: 0; flex: none; width: min(240px, 70vw); scroll-snap-align: start; text-align: center; }
+  figure img { width: 100%; border-radius: 16px; border: 1px solid rgba(94, 116, 128, .25); display: block; }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .note { background: var(--warnbg); color: var(--warn); border-radius: 12px; padding: 10px 12px; margin-top: 10px;
+          font-size: 14.5px; }
+  .tip { background: var(--tint); border-radius: 12px; padding: 10px 12px; margin-top: 10px; font-size: 14.5px; }
+  details { border-top: 1px solid rgba(94, 116, 128, .2); padding: 8px 0; }
+  details:first-of-type { border-top: 0; }
+  summary { font-weight: 600; cursor: pointer; }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding-bottom: 24px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>يوسف نت</h1>
+  <p>دليل أصحاب المحلات: اطلب كروت لزبائنك من جوالك</p>
+</header>
+<main>
+  <nav>
+    <b>المحتويات</b>
+    <a href="#start">التثبيت والدخول</a>
+    <a href="#wallet">المحفظة</a>
+    <a href="#order">اطلب كرت لزبون</a>
+    <a href="#bulk">طلب كروت بالجملة والمراسلة</a>
+    <a href="#debt">دينك ودفعاتك</a>
+    <a href="#report">ملخص طلباتي</a>
+    <a href="#faq">أسئلة</a>
+  </nav>
+
+  <section id="start">
+    <h2><span class="n">1</span> التثبيت والدخول</h2>
+    <ol>
+      <li>ثبّت تطبيق <b>يوسف نت</b> من الملف اللي يرسله لك يوسف. لو الجوال سأل: اسمح بالتثبيت من هذا المصدر.</li>
+      <li>افتح التطبيق، واكتب <b>اسم المستخدم</b> و<b>كلمة المرور</b> اللي أعطاك يوسف.</li>
+      <li>اسمح للتطبيق بالإشعارات، عشان يوصلك تأكيد دفعاتك والردود على رسائلك.</li>
+    </ol>
+    <div class="tip">التحديثات تجيك من داخل التطبيق نفسه: لو طلع لك <span class="btn">تحديث الآن</span> اضغطه.</div>
+  </section>
+
+  <section id="wallet">
+    <h2><span class="n">2</span> المحفظة</h2>
+    <p>فوق في الرئيسية يطلع <b>رصيد المحفظة</b>. كل كرت تطلبه لزبون ينخصم سعره من المحفظة.</p>
+    <ul>
+      <li><b>تشحنها</b> عند الوكيل: تعطيه المبلغ وهو يسجّله، ويطلع لك على طول تحت <b>شحنات المحفظة</b>.</li>
+      <li>لو المحفظة ما تكفي، الطلب ما يمشي.</li>
+    </ul>
+    <div class="shots">
+      <figure><img src="shops/home.jpg" alt="الرئيسية" loading="lazy"><figcaption>الرئيسية: المحفظة والكروت</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="order">
+    <h2><span class="n">3</span> اطلب كرت لزبون</h2>
+    <ol>
+      <li>تحت <b>اطلب كرت</b> اضغط الفئة اللي يبيها الزبون، وبعدها <span class="btn">اطلب</span>.</li>
+      <li>يطلع لك <b>رمز QR</b>. الزبون يصوّره بكاميرا جواله، أو ترسل له الرابط:
+        <span class="btn">أرسل الرابط بالواتساب</span> أو <span class="btn">أرسل الرابط برسالة SMS</span> أو <span class="btn">نسخ الرابط</span>.</li>
+      <li>الزبون يفتح الرابط <b>وهو متصل بواي فاي يوسف نت</b> (حتى لو ما دخل الشبكة للحين)، ويضغط
+        <span class="btn">اعرض رقم الكرت</span>، فيطلع له الرقم ويدخل فيه.</li>
+      <li>أول ما يفتحه الزبون، الطلب يصير عندك <b>استلمه الزبون</b>.</li>
+    </ol>
+    <div class="shots">
+      <figure><img src="shops/confirm.jpg" alt="تأكيد الطلب" loading="lazy"><figcaption>تأكيد الطلب</figcaption></figure>
+      <figure><img src="shops/qr.jpg" alt="رمز الطلب" loading="lazy"><figcaption>الرمز والرابط للزبون</figcaption></figure>
+    </div>
+    <div class="note">الرقم يطلع <b>مرة وحدة</b> وعلى جوال الزبون بس. قل له يحفظه أو يصوّره قبل ما يقفل الصفحة.</div>
+  </section>
+
+  <section id="bulk">
+    <h2><span class="n">4</span> طلب كروت بالجملة والمراسلة</h2>
+    <p>من الرئيسية اضغط <span class="btn">مراسلة الوكيل والمدير / طلب كروت</span>:</p>
+    <ul>
+      <li>تكتب رسالة، أو ترسل صورة أو ملف أو رسالة صوتية.</li>
+      <li>زر <b>طلب كروت</b> (عربة التسوق 🛒 جنب مكان الكتابة): تختار ورقية أو إلكترونية، والفئة والعدد، وتضيف ملاحظة لو تبي.</li>
+      <li>الطلبية توصل للوكيل ويوسف على طول، ويوصلك إشعار لما يردّون.</li>
+    </ul>
+    <div class="shots">
+      <figure><img src="shops/chat.jpg" alt="المراسلة" loading="lazy"><figcaption>المراسلة</figcaption></figure>
+      <figure><img src="shops/bulk.jpg" alt="طلب كروت" loading="lazy"><figcaption>طلب كروت</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="debt">
+    <h2><span class="n">5</span> دينك ودفعاتك</h2>
+    <p>في الرئيسية بطاقة <b>حساب الكروت</b>: كم عليك للكروت الورقية اللي استلمتها، وآخر دفعة:</p>
+    <ul>
+      <li><span class="btn">كشف حسابي</span>: كل تسليم وكل دفعة بتاريخها والرصيد بعدها.</li>
+      <li><span class="btn">سجّلت دفعة</span>: لو دفعت للوكيل كاش أو حوّلت، سجّلها هنا (الحوالة مع صورة الإيصال). الوكيل يأكّدها ويوصلك إشعار.</li>
+      <li><span class="btn">دفعاتي</span>: الدفعات اللي سجّلتها وحالتها (بانتظار التأكيد، انأكّدت، مرفوضة مع السبب).</li>
+    </ul>
+    <div class="shots">
+      <figure><img src="shops/statement.jpg" alt="كشف حسابي" loading="lazy"><figcaption>كشف حسابي</figcaption></figure>
+      <figure><img src="shops/pay.jpg" alt="سجّلت دفعة" loading="lazy"><figcaption>سجّلت دفعة</figcaption></figure>
+    </div>
+    <div class="tip">المحفظة (الكروت اللي تطلبها للزبائن) لحالها، ودين الكروت الورقية لحاله.</div>
+  </section>
+
+  <section id="report">
+    <h2><span class="n">6</span> ملخص طلباتي</h2>
+    <p><span class="btn">ملخص طلباتي</span>: كم كرت طلبت من كل فئة وكل يوم، وكم صرفت من المحفظة، وكم شحنت، وكم طلب بانتظار الزبون.</p>
+    <div class="shots">
+      <figure><img src="shops/report.jpg" alt="ملخص طلباتي" loading="lazy"><figcaption>ملخص طلباتي</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="faq">
+    <h2><span class="n">؟</span> أسئلة</h2>
+    <details><summary>الزبون ضاع منه الرقم أو فتح الرابط من جوال ثاني</summary>
+      كلّم يوسف: يقدر يعيد فتح نفس الرابط مرة وحدة، وترسله للزبون من جديد.</details>
+    <details><summary>أبي ألغي طلب والزبون ما فتحه</summary>
+      كلّم الوكيل أو يوسف، يلغونه والمبلغ يرجع لمحفظتك. الطلب اللي فتحه الزبون ما ينلغى.</details>
+    <details><summary>الطلب ما يمشي</summary>
+      الطلب يحتاج نت. وتأكد إن المحفظة تكفي سعر الكرت.</details>
+    <details><summary>الزبون يقول الرابط ما يفتح</summary>
+      لازم يكون متصل بواي فاي يوسف نت، أو عنده نت من الجوال. لو ما فتح، جرّب ترسله بالواتساب بدل الـ SMS.</details>
+    <details><summary>نسيت كلمة المرور</summary>
+      كلّم يوسف يغيّرها لك.</details>
+  </section>
+</main>
+<footer>يوسف نت</footer>
+</body>
+</html>
