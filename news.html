@@ -163,6 +163,11 @@
       } catch (e) { note.className = 'bad'; note.textContent = 'تأكد إنك متصل بالنت وجرّب مرة ثانية'; b.disabled = false; b.textContent = 'خذ كرتك المجاني'; }
     };
     box.appendChild(b); box.appendChild(note);
+    // مين أخذ كروت الخبر (أسماء مختصرة، update_v78)
+    if (p.takers && p.takers.length) {
+      const more = (p.takers_n || 0) - p.takers.length;
+      box.appendChild(el('div', 'muted', '🙋 أخذها: ' + p.takers.join('، ') + (more > 0 ? ' و' + more + ' غيرهم' : '')));
+    }
     return box;
   }
 
